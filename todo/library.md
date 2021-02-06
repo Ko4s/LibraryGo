@@ -38,3 +38,8 @@ Insert
         * Nope
             Create Book
             Insert BookCpy
+
+## paczki
+- database
+- actions (addingBook etc)
+- handlers/services -> in package http
