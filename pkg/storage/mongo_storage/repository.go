@@ -81,22 +81,15 @@ func (s *Storage) FindBookByText(query string) (*[]adding.Book, error) {
 	bookList := []adding.Book{}
 
 	for coursor.Next(context.Background()) {
-		mongoBook := Book{}
-		err := coursor.Decode(&mongoBook)
+		book := Book{}
+		err := coursor.Decode(&book)
 
 		if err != nil {
 			return nil, err
 		}
 
-		// TODO: write concerter function from mongo book object 2 adding book object
-		book := adding.Book{
-			ID:     mongoBook.ID.Hex(),
-			Title:  mongoBook.Title,
-			Author: mongoBook.Author,
-			Genre:  mongoBook.Genre,
-		}
 
-		bookList = append(bookList, book)
+		bookList = append(bookList, book.toAddingBook())
 	}
 
 	return &bookList, nil
