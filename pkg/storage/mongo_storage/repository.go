@@ -6,9 +6,12 @@ import (
 	"library/pkg/adding"
 	"time"
 
+	configreader "library/pkg/config_reader"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 const bookCollectionName = "Books"
@@ -18,11 +21,24 @@ var (
 	ErrNotFound = errors.New("storage: Element not found in db")
 )
 
-func NewStorage(mongoDB *mongo.Database) (*Storage, error) {
+func NewStorage(cr *configreader.ConfigReader) (*Storage, error) {
 	//TODO
-	bookCollection := mongoDB.Collection(bookCollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	connectionString := cr.GetString("DB_CONNECTION_STRING")
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(connectionString))
+
+	if err != nil {
+		return nil, err
+	}
+
+	dbName := cr.GetString("DB_NAME")
+	db := client.Database(dbName)
+	bookCollection := db.Collection(bookCollectionName)
 
 	return &Storage{
+		db:             db,
 		bookCollection: bookCollection,
 	}, nil
 }
@@ -31,6 +47,7 @@ type Storage struct {
 	//TODO
 	//reference to db or db object
 	//db <= typem z drivera mongo db
+	db             *mongo.Database
 	bookCollection *mongo.Collection
 }
 
@@ -87,7 +104,6 @@ func (s *Storage) FindBookByText(query string) (*[]adding.Book, error) {
 		if err != nil {
 			return nil, err
 		}
-
 
 		bookList = append(bookList, book.toAddingBook())
 	}
