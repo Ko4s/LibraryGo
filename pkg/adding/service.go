@@ -9,10 +9,10 @@ type Service interface {
 
 //Repository provides access to books repository
 type Repository interface {
-	AddBook(book Book) error
+	AddBook(book *Book) error
 	//maybe add method GetBooks()
-	BookExist(book Book) bool
-	AddBookCopy(ID string, bc BookCopy) error
+	BookExist(book *Book) bool
+	AddBookCopy(ID string, bc *BookCopy) error
 }
 
 type service struct {
@@ -29,14 +29,14 @@ func (s *service) AddBook(books ...Book) error {
 	for _, book := range books {
 
 		//refactos function bookExist to getBookID
-		bookExist := s.r.BookExist(book)
+		bookExist := s.r.BookExist(&book)
 
 		if bookExist {
 			//Later add adding of Book Copy
 			continue
 		}
 
-		err := s.r.AddBook(book)
+		err := s.r.AddBook(&book)
 
 		if err != nil {
 			return err

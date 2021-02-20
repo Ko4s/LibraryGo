@@ -17,10 +17,12 @@ import (
 const bookCollectionName = "Books"
 const defaulProcessTime = time.Second * 4
 
+// Custom storage errors
 var (
 	ErrNotFound = errors.New("storage: Element not found in db")
 )
 
+// NewStorage is a storage constructor
 func NewStorage(cr *configreader.ConfigReader) (*Storage, error) {
 	//TODO
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
@@ -43,6 +45,7 @@ func NewStorage(cr *configreader.ConfigReader) (*Storage, error) {
 	}, nil
 }
 
+// Storage provide methods to work with books and books copy collections
 type Storage struct {
 	//TODO
 	//reference to db or db object
@@ -54,8 +57,7 @@ type Storage struct {
 //Books
 
 // AddBook will add book to teh datavase
-// @param book - type maybe will change later
-func (s *Storage) AddBook(book adding.Book) (string, error) {
+func (s *Storage) AddBook(book *adding.Book) (string, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaulProcessTime)
 	defer cancel()
@@ -75,10 +77,15 @@ func (s *Storage) AddBook(book adding.Book) (string, error) {
 	return result.InsertedID.(primitive.ObjectID).Hex(), nil
 }
 
+// FindBookByID returns book based on given ID
+// If books doesnt exist ErrNotFound is returned
 func (s *Storage) FindBookByID(ID string) (*adding.Book, error) {
 	return nil, nil
 }
 
+// FindBookByText return list of books based on given query text
+// Its sreaching for text in Book title, author or genre
+// If something goes wrong method returns error, else return pointer to slice of books
 func (s *Storage) FindBookByText(query string) (*[]adding.Book, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), defaulProcessTime)
 	defer cancel()
@@ -128,4 +135,9 @@ func (s *Storage) BookExist(book adding.Book) bool {
 
 func (s *Storage) AddBookCopy(ID string, bc adding.BookCopy) error {
 	return nil
+}
+
+// DestructiveReset drops all collections
+func (s *Storage) DestructiveReset() {
+	s.bookCollection.Drop(context.Background())
 }
