@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/aws/aws-sdk-go v1.37.1 // indirect
+	github.com/go-chi/chi v1.5.3 // indirect
 	github.com/golang/snappy v0.0.2 // indirect
 	github.com/klauspost/compress v1.11.7 // indirect
 	github.com/spf13/viper v1.7.1

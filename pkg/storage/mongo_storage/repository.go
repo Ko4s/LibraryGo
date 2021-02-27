@@ -14,8 +14,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-const bookCollectionName = "Books"
-const defaulProcessTime = time.Second * 4
+const (
+	bookCollectionName      = "Books"
+	bookCoptyCollectionName = "BookCopies"
+	defaulProcessTime       = time.Second * 4
+)
 
 // Custom storage errors
 var (
@@ -38,10 +41,12 @@ func NewStorage(cr *configreader.ConfigReader) (*Storage, error) {
 	dbName := cr.GetString("DB_NAME")
 	db := client.Database(dbName)
 	bookCollection := db.Collection(bookCollectionName)
+	bookCoppiesCollection := db.Collection(bookCoptyCollectionName)
 
 	return &Storage{
-		db:             db,
-		bookCollection: bookCollection,
+		db:                    db,
+		bookCollection:        bookCollection,
+		bookCoppiesCollection: bookCoppiesCollection,
 	}, nil
 }
 
@@ -50,8 +55,9 @@ type Storage struct {
 	//TODO
 	//reference to db or db object
 	//db <= typem z drivera mongo db
-	db             *mongo.Database
-	bookCollection *mongo.Collection
+	db                    *mongo.Database
+	bookCollection        *mongo.Collection
+	bookCoppiesCollection *mongo.Collection
 }
 
 //Books
@@ -118,26 +124,67 @@ func (s *Storage) FindBookByText(query string) (*[]adding.Book, error) {
 	return &bookList, nil
 }
 
-func (s *Storage) UpdateBook(book adding.Book) (*adding.Book, error) {
+func (s *Storage) UpdateBook(book *adding.Book) (*adding.Book, error) {
 	return nil, nil
 }
 
-func (s *Storage) DeleteBook(book adding.Book) (*adding.Book, error) {
+func (s *Storage) DeleteBook(book *adding.Book) (*adding.Book, error) {
 	return nil, nil
 }
 
 // Books Copy
 
 // code below noe relevant right now, we dont have book copy yet
-func (s *Storage) BookExist(book adding.Book) bool {
-	return false
+func (s *Storage) BookExist(book *adding.Book) (*adding.Book, error) {
+
+	bookFromDB := Book{}
+
+	filter := bson.M{
+		"title":  book.Title,
+		"author": book.Author,
+	}
+
+	result := s.bookCollection.FindOne(context.Background(), filter)
+
+	if err := result.Decode(&bookFromDB); err != nil {
+		return nil, err
+	}
+
+	bookToReturn := bookFromDB.toAddingBook()
+	return &bookToReturn, nil
 }
 
-func (s *Storage) AddBookCopy(ID string, bc adding.BookCopy) error {
+func (s *Storage) AddBookCopy(bc adding.BookCopy) error {
+	bookID, err := primitive.ObjectIDFromHex(bc.BookID)
+
+	if err != nil {
+		return err
+	}
+
+	newBookCopy := BookCopy{
+		BookID:          bookID,
+		Comment:         bc.Comment,
+		PublicationDate: bc.PublicationDate,
+	}
+
+	_, err = s.bookCoppiesCollection.InsertOne(context.TODO(), newBookCopy)
+
+	if err != nil {
+		return err
+	}
+	
 	return nil
 }
 
 // DestructiveReset drops all collections
 func (s *Storage) DestructiveReset() {
 	s.bookCollection.Drop(context.Background())
+}
+
+func (s *Storage) Ping() {
+	err := s.db.Client().Ping(context.TODO(), nil)
+
+	if err != nil {
+		panic(err)
+	}
 }
