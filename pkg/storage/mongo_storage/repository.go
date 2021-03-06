@@ -134,7 +134,7 @@ func (s *Storage) DeleteBook(book *adding.Book) (*adding.Book, error) {
 
 // Books Copy
 
-// code below noe relevant right now, we dont have book copy yet
+// BookExist checks if book with given title and author exist in db
 func (s *Storage) BookExist(book *adding.Book) (*adding.Book, error) {
 
 	bookFromDB := Book{}
@@ -154,6 +154,7 @@ func (s *Storage) BookExist(book *adding.Book) (*adding.Book, error) {
 	return &bookToReturn, nil
 }
 
+// AddBookCopy book adds 
 func (s *Storage) AddBookCopy(bc adding.BookCopy) error {
 	bookID, err := primitive.ObjectIDFromHex(bc.BookID)
 
@@ -181,6 +182,7 @@ func (s *Storage) DestructiveReset() {
 	s.bookCollection.Drop(context.Background())
 }
 
+// Ping pings client and check if we hace connection with db
 func (s *Storage) Ping() {
 	err := s.db.Client().Ping(context.TODO(), nil)
 
